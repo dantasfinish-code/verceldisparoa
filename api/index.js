@@ -14,7 +14,7 @@ const VALOR_CENTAVOS = 4680;
 // Por segurança, a chave deve ser armazenada em uma variável de ambiente no Vercel.
 // A chave de API deve ser configurada como uma variável de ambiente no Vercel.
 // O valor foi extraído do pagamento.php original.
-const API_KEY = process.env.PIX_API_KEY || 'sk_live_EBKYpl0XppoRJSr1sHv9oiQzO9qrMSC2pUnt0lQBUJVP:c4458e78-0de1-4f5d-8814-907ee1638e72';
+const API_KEY = process.env.PIX_API_KEY || 'c2tfbGl2ZV9FQktZcGwwWHBwb1JKU1Ixc0h2OW9pUXpPOHFyTVNDMnBVbnQwbFFCVUpWUFN4YjQ6YzQ0NThlNzgtMGRlMS00ZjVkLTg4MTQtOTA3ZWUxNjM4ZTcy';
 const API_URL = 'https://api.ghostspaysv2.com/functions/v1/transactions';
 
 module.exports = async (req, res) => {
