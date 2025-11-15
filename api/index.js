@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 // Função auxiliar para formatar o CPF/CNPJ (remover caracteres não numéricos)
 const cleanDocument = (doc) => doc ? doc.replace(/[^0-9]/g, '') : '';
 
@@ -9,49 +7,53 @@ const cleanPhone = (phone) => phone ? phone.replace(/[^0-9]/g, '') : '';
 // Valor fixo em centavos (R$ 46,80)
 const VALOR_CENTAVOS = 4680;
 
-// Chave de API (Substitua pela chave real do usuário)
-// A chave foi extraída do pagamento.php: sk_live_EBKYpl0XppoRJSr1sHv9oiQzO9qrMSC2pUnt0lQBUJVP Sxb4:c4458e78-0de1-4f5d-8814-907ee1638e72
-// Por segurança, a chave deve ser armazenada em uma variável de ambiente no Vercel.
-// A chave de API deve ser configurada como uma variável de ambiente no Vercel.
-// O valor foi extraído do pagamento.php original.
+// IMPORTANTE: A chave JÁ está em Base64 no PHP original
+// Não precisamos codificar novamente
 const API_KEY = process.env.PIX_API_KEY || 'c2tfbGl2ZV9FQktZcGwwWHBwb1JKU1Ixc0h2OW9pUXpPOHFyTVNDMnBVbnQwbFFCVUpWUFN4YjQ6YzQ0NThlNzgtMGRlMS00ZjVkLTg4MTQtOTA3ZWUxNjM4ZTcy';
 const API_URL = 'https://api.ghostspaysv2.com/functions/v1/transactions';
 
 module.exports = async (req, res) => {
-    // Configura o cabeçalho para JSON
+    // Habilita CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('Content-Type', 'application/json');
 
-    // O Vercel trata requisições GET e POST para o mesmo arquivo `index.js`
-    // No entanto, o front-end está fazendo um POST para `pagamento.php` (que será corrigido)
-    // E o redirecionamento inicial é um GET para `/api/index`.
-    // Vamos assumir que a requisição para a API de PIX virá via POST.
-    
-    // Extrai os dados do corpo da requisição (POST)
-    const { nome, cpf, email, telefone } = req.body;
+    // Trata requisição OPTIONS (preflight)
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
 
-    // Se a requisição for GET, vamos apenas retornar um erro ou uma mensagem de instrução
-    if (req.method === 'GET') {
-        // Se for um GET, o front-end está chamando `/api/index?nome=...`
-        // O front-end em `dados.html` precisa ser corrigido para chamar a API de PIX diretamente
-        // e não redirecionar para `/api/index`.
-        // Por enquanto, vamos retornar um erro claro.
+    // Apenas aceita POST
+    if (req.method !== 'POST') {
         return res.status(400).json({
             success: false,
-            error: 'Método GET não suportado para geração de PIX. Use POST.',
-            details: 'O fluxo de redirecionamento em dados.html está incorreto. Ele deve chamar a API de PIX diretamente via JavaScript (fetch) e não redirecionar para ela.'
+            error: 'Método não suportado. Use POST.'
         });
     }
+
+    // Extrai os dados do corpo da requisição
+    const { nome, cpf, email, telefone } = req.body;
+
+    // Log para debug (opcional)
+    console.log('Dados recebidos:', { nome, cpf, email, telefone });
 
     // Validação de dados
     const cleanCpf = cleanDocument(cpf);
     const cleanTelefone = cleanPhone(telefone);
 
     if (!cleanCpf || cleanCpf.length !== 11) {
-        return res.status(400).json({ success: false, error: 'CPF inválido. Deve conter 11 dígitos.' });
+        return res.status(400).json({ 
+            success: false, 
+            error: 'CPF inválido. Deve conter 11 dígitos.' 
+        });
     }
 
     if (!cleanTelefone || cleanTelefone.length < 10) {
-        return res.status(400).json({ success: false, error: 'Telefone inválido. Mínimo 10 dígitos.' });
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Telefone inválido. Mínimo 10 dígitos.' 
+        });
     }
 
     // Corpo da requisição para a API de PIX
@@ -62,7 +64,7 @@ module.exports = async (req, res) => {
             },
             name: nome || 'Cliente Sem Nome',
             email: email || 'cliente@email.com',
-            phone: cleanTelefone || '11999999999'
+            phone: cleanTelefone
         },
         paymentMethod: 'PIX',
         items: [
@@ -77,47 +79,41 @@ module.exports = async (req, res) => {
     };
 
     try {
-        // Remove espaços em branco da chave antes de codificar
+        // A chave já está em Base64, então usamos diretamente
         const cleanApiKey = API_KEY.replace(/\s/g, '');
-        const auth = `Basic ${Buffer.from(cleanApiKey).toString('base64')}`;
-
-        if (!API_KEY || API_KEY.includes('YOUR_API_KEY')) {
-            return res.status(500).json({
-                success: false,
-                error: 'Chave de API não configurada.',
-                details: 'Por favor, configure a variável de ambiente PIX_API_KEY no Vercel.'
-            });
-        }
+        
+        console.log('Chamando API PIX...');
 
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': auth
+                'accept': 'application/json',
+                'authorization': `Basic ${cleanApiKey}`,
+                'content-type': 'application/json'
             },
             body: JSON.stringify(requestBody)
         });
 
-        let data;
         const responseText = await response.text();
+        console.log('Status HTTP:', response.status);
+        console.log('Resposta da API:', responseText.substring(0, 200));
 
+        let data;
         try {
             data = JSON.parse(responseText);
         } catch (e) {
-            // Trata o erro de resposta não-JSON (como "Unauthorized")
             console.error('Erro ao parsear JSON:', responseText);
             return res.status(response.status).json({
                 success: false,
                 error: 'Erro de comunicação com a API de PIX.',
-                details: `A API retornou um erro não-JSON: ${responseText.substring(0, 50)}...`,
+                details: `A API retornou: ${responseText.substring(0, 100)}`,
                 http_status: response.status
             });
         }
 
-        // Se a resposta HTTP não for OK (mas for JSON), tratamos aqui
+        // Se a resposta HTTP não for OK
         if (!response.ok) {
-            const errorMsg = data.message || data.error || `Erro HTTP ${response.status} na API externa.`;
+            const errorMsg = data.message || data.error || `Erro HTTP ${response.status}`;
             return res.status(response.status).json({
                 success: false,
                 error: errorMsg,
@@ -125,34 +121,36 @@ module.exports = async (req, res) => {
             });
         }
 
-
-
-        // Verifica se o PIX foi gerado
+        // Verifica se o PIX foi recusado
         if (data.status === 'refused') {
-            const refusedReason = data.refusedReason ? data.refusedReason.description : 'Pagamento recusado pela operadora.';
+            const refusedReason = data.refusedReason?.description || 'Pagamento recusado pela operadora.';
             return res.status(400).json({
                 success: false,
                 error: refusedReason,
                 refused: true,
+                details: data.refusedReason,
                 full_response: data
             });
         }
 
+        // Verifica se o QR Code foi gerado
         if (!data.pix || !data.pix.qrcode) {
             return res.status(400).json({
                 success: false,
-                error: 'QR Code PIX não foi gerado pela API. Verifique os dados de entrada.',
+                error: 'QR Code PIX não foi gerado pela API.',
+                status: data.status || 'unknown',
                 full_response: data
             });
         }
 
-        // Sucesso
+        // Sucesso!
         return res.status(200).json({
             success: true,
             transactionId: data.id,
             qrcode: data.pix.qrcode,
             expirationDate: data.pix.expirationDate,
-            amount: data.amount
+            amount: data.amount,
+            status: data.status
         });
 
     } catch (error) {
