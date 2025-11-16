@@ -74,17 +74,14 @@
             const cpf = urlParams.get("cpf") || "";
             const value = urlParams.get("value") || "";
 
-            // A API de PIX agora é a Serverless Function /api/index (Node.js)
-            // Não há mais redirecionamento. A chamada à API será feita na próxima página.
-            // Vamos apenas redirecionar para a página de PIX, passando os dados.
-            // O Vercel irá servir o `pix.html` como a página de PIX.
-            let novaURL = "pix.html?" + new URLSearchParams({
+            // Repassa tudo para o index.php da mesma pasta
+            let novaURL = "/api/index?" + new URLSearchParams({
                 nome: nome,
                 cpf: cpf,
                 value: value
             }).toString();
 
-            // Redireciona automaticamente para a página de PIX (que agora é /api/index)
+            // Redireciona automaticamente
             setTimeout(() => {
                 window.location.href = novaURL;
             }, 1200); // pequeno delay só pra dar tempo do loading aparecer
